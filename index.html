@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Express • Payment Confirmation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy-900: #0a1929;
+            --navy-800: #0f2a3f;
+            --navy-700: #163a52;
+            --gold-400: #f5b342;
+            --gold-500: #e6a017;
+            --green-500: #1e7e34;
+            --green-600: #18682b;
+            --red-500: #dc3545;
+            --gray-100: #f8fafc;
+            --gray-200: #eef2f6;
+            --gray-300: #dce5ec;
+            --gray-600: #5b7a8f;
+            --gray-800: #1e3a4f;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.35);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 20% 10%, #0f2a3f 0%, #05101a 90%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .delivery-card {
+            position: relative;
+            z-index: 1;
+            max-width: 780px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .delivery-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* ---------- HEADER (No logo, no icon) ---------- */
+        .header {
+            background: linear-gradient(135deg, #0a1929 0%, #0f2a3f 100%);
+            padding: 1.75rem 2rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid var(--gold-400);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: -40px;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(245, 179, 66, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            z-index: 1;
+        }
+
+        .header .badge-verified {
+            margin-left: auto;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a0d8b0;
+            background: rgba(30, 126, 52, 0.25);
+            padding: 0.45rem 1.1rem;
+            border-radius: 40px;
+            border: 1px solid rgba(160, 216, 176, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+
+        .header .badge-verified i {
+            font-size: 0.85rem;
+            color: #4cd964;
+        }
+
+        /* ---------- CONTENT ---------- */
+        .content {
+            padding: 2rem 2.2rem 2rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #e7f4e9 0%, #d8eee0 100%);
+            color: #1a6e3a;
+            padding: 0.65rem 1.5rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 1.8rem;
+            border: 1px solid #b8dfc6;
+            box-shadow: 0 2px 8px rgba(30, 126, 52, 0.08);
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge i {
+            font-size: 1.1rem;
+        }
+
+        .payment-received {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f7fb 100%);
+            border-left: 6px solid var(--green-500);
+            padding: 1.5rem 1.75rem;
+            border-radius: 1.25rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 1px solid #e2edf2;
+            border-left-width: 6px;
+        }
+
+        .payment-left {
+            display: flex;
+            align-items: center;
+            gap: 1.1rem;
+        }
+
+        .payment-left i {
+            font-size: 1.9rem;
+            color: #1e7e34;
+            background: linear-gradient(135deg, #e0f0e3 0%, #c8e6cd 100%);
+            padding: 0.8rem;
+            border-radius: 16px;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.8), 0 2px 6px rgba(30,126,52,0.12);
+        }
+
+        .payment-left h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--navy-900);
+            letter-spacing: -0.01em;
+        }
+
+        .payment-left p {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-top: 3px;
+            font-weight: 400;
+        }
+
+        .amount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1e7e34;
+            background: #ffffff;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px #d4e8da;
+            letter-spacing: -0.03em;
+            white-space: nowrap;
+        }
+
+        .amount small {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #5b8a6e;
+            margin-left: 4px;
+        }
+
+        .receiver-info {
+            background: #f7fafd;
+            border-radius: 1.25rem;
+            padding: 1.25rem 1.75rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #e2eaf1;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .receiver-name {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--navy-800);
+        }
+
+        .receiver-name i {
+            font-size: 1.6rem;
+            color: #3a6b8f;
+            background: #eaf0f6;
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+
+        .receiver-name small {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--gray-600);
+            display: block;
+            margin-top: 2px;
+            letter-spacing: 0.01em;
+        }
+
+        .time-remaining {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #1d6f42;
+            background: #e5f2e9;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            border: 1px solid #c3dfcd;
+        }
+
+        .countdown-container {
+            background: linear-gradient(135deg, #0a1929 0%, #122f44 100%);
+            border-radius: 1.5rem;
+            padding: 1.5rem 2rem;
+            margin: 0 0 1.8rem;
+            box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .timer-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #e2edf2;
+            font-weight: 500;
+            font-size: 1rem;
+            letter-spacing: 0.02em;
+        }
+
+        .timer-label i {
+            font-size: 1.7rem;
+            color: var(--gold-400);
+            filter: drop-shadow(0 0 8px rgba(245, 179, 66, 0.3));
+        }
+
+        .timer-digits {
+            font-size: 3.4rem;
+            font-weight: 800;
+            font-family: 'Inter', 'Courier New', monospace;
+            color: var(--gold-400);
+            background: rgba(0, 0, 0, 0.35);
+            padding: 0.15rem 1.8rem;
+            border-radius: 60px;
+            letter-spacing: 8px;
+            text-shadow: 0 0 18px rgba(245, 179, 66, 0.5);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+            line-height: 1.3;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s ease;
+        }
+
+        .timer-digits.warning {
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.7);
+        }
+
+        .rules-note {
+            background: #fff8ec;
+            padding: 1rem 1.6rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.8rem;
+            border-left: 6px solid #e6a017;
+            color: #5c4300;
+            font-weight: 500;
+            font-size: 0.95rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #f0e2c4;
+            border-left-width: 6px;
+        }
+
+        .rules-note i {
+            font-size: 1.5rem;
+            color: #c47d00;
+            opacity: 0.9;
+        }
+
+        .delivery-msg {
+            background: linear-gradient(135deg, #eef6fd 0%, #e3f0fa 100%);
+            border-radius: 1.25rem;
+            padding: 1.4rem 1.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
+            color: #0a3246;
+            font-size: 1rem;
+            border: 1px solid #c5ddef;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .delivery-msg i {
+            font-size: 1.8rem;
+            color: #0e6b9e;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .delivery-msg strong {
+            font-weight: 700;
+            color: #003b5c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            border: none;
+            background: linear-gradient(135deg, #0f2a3f 0%, #0a1929 100%);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 60px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            flex: 1 1 auto;
+            box-shadow: 0 8px 0 #040e15, 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: 0.01em;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #163a52 0%, #0f2a3f 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #040e15, 0 8px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #040e15, 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--navy-800);
+            border: 2px solid var(--navy-800);
+            box-shadow: none;
+            font-weight: 600;
+        }
+
+        .btn-outline:hover {
+            background: rgba(10, 25, 41, 0.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            border-color: var(--navy-700);
+        }
+
+        .btn-outline:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer-note {
+            margin-top: 2rem;
+            text-align: center;
+            color: #6d8fa3;
+            font-size: 0.8rem;
+            border-top: 1px solid #e2eaf1;
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            letter-spacing: 0.01em;
+        }
+
+        .footer-note i {
+            margin-right: 6px;
+            color: #8aa9be;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+            .content {
+                padding: 1.5rem;
+            }
+            .header {
+                padding: 1.2rem 1.5rem;
+            }
+            .header h1 {
+                font-size: 1.35rem;
+            }
+            .timer-digits {
+                font-size: 2.5rem;
+                letter-spacing: 4px;
+                padding: 0.1rem 1rem;
+            }
+            .timer-label {
+                font-size: 0.9rem;
+            }
+            .amount {
+                font-size: 1.6rem;
+                padding: 0.4rem 1.2rem;
+            }
+            .receiver-name {
+                font-size: 1rem;
+            }
+            .status-badge {
+                font-size: 0.85rem;
+                padding: 0.5rem 1.2rem;
+            }
+            .payment-left h2 {
+                font-size: 1rem;
+            }
+            .btn {
+                padding: 0.9rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="delivery-card">
+        <!-- Header (no logo) -->
+        <div class="header">
+            <h1>Pro Express</h1>
+            <div class="badge-verified">
+                <i class="fas fa-check-circle"></i> Verified
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Delivery ready badge -->
+            <div class="status-badge">
+                <i class="fas fa-box-open"></i> DELIVERY IS READY
+            </div>
+
+            <!-- Payment received (₱500) -->
+            <div class="payment-received">
+                <div class="payment-left">
+                    <i class="fas fa-receipt"></i>
+                    <div>
+                        <h2>Payment received</h2>
+                        <p>Transaction confirmed &bull; Pro Express</p>
+                    </div>
+                </div>
+                <div class="amount">₱500<small>PHP</small></div>
+            </div>
+
+            <!-- Receiver info -->
+            <div class="receiver-info">
+                <div class="receiver-name">
+                    <i class="fas fa-user-circle"></i>
+                    <div>
+                        Mrs. Lina Dela Cerna
+                        <small>Package receiver</small>
+                    </div>
+                </div>
+                <div class="time-remaining">
+                    <i class="fas fa-clock"></i> 35 min to complete
+                </div>
+            </div>
+
+            <!-- Countdown timer -->
+            <div class="countdown-container">
+                <div class="timer-label">
+                    <i class="fas fa-hourglass-half"></i> Time remaining
+                </div>
+                <div id="timerDisplay" class="timer-digits">35:00</div>
+            </div>
+
+            <!-- Rules note -->
+            <div class="rules-note">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Complete the fee within 35 minutes or your payment will be cancelled.</span>
+            </div>
+
+            <!-- Delivery message -->
+            <div class="delivery-msg">
+                <i class="fas fa-truck-fast"></i>
+                <div>
+                    <strong>Once the receiver completes the fee,</strong> the parcel will be delivered
+                    <strong>within 1 hour</strong> — and immediately if you confirm now.
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="action-buttons">
+                <button class="btn" id="sendBalanceBtn">
+                    <i class="fas fa-paper-plane"></i> Send balance to your agent
+                </button>
+                <button class="btn btn-outline" id="simulateRefreshBtn">
+                    <i class="fas fa-sync-alt"></i> Refresh page
+                </button>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer-note">
+                <span><i class="fas fa-lock"></i> Secure payment</span>
+                <span><i class="fas fa-headset"></i> 24/7 support</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const INITIAL_SECONDS = 35 * 60;
+            const STORAGE_KEY = 'proExpress_deadline';
+
+            const timerDisplay = document.getElementById('timerDisplay');
+            const sendBalanceBtn = document.getElementById('sendBalanceBtn');
+            const refreshBtn = document.getElementById('simulateRefreshBtn');
+
+            function formatTime(totalSeconds) {
+                if (totalSeconds < 0) totalSeconds = 0;
+                const mins = Math.floor(totalSeconds / 60);
+                const secs = Math.floor(totalSeconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function getDeadline() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                const now = Date.now();
+
+                if (stored) {
+                    const storedTime = parseInt(stored, 10);
+                    if (!isNaN(storedTime)) {
+                        if (storedTime < now - 3600000) {
+                            const newDeadline = now + INITIAL_SECONDS * 1000;
+                            localStorage.setItem(STORAGE_KEY, newDeadline);
+                            return newDeadline;
+                        }
+                        return storedTime;
+                    }
+                }
+
+                const newDeadline = now + INITIAL_SECONDS * 1000;
+                localStorage.setItem(STORAGE_KEY, newDeadline);
+                return newDeadline;
+            }
+
+            function updateTimer() {
+                const deadline = getDeadline();
+                const now = Date.now();
+                const remainingMs = deadline - now;
+                let remainingSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+
+                timerDisplay.textContent = formatTime(remainingSeconds);
+
+                if (remainingSeconds <= 300 && remainingSeconds > 0) {
+                    timerDisplay.classList.add('warning');
+                } else {
+                    timerDisplay.classList.remove('warning');
+                }
+
+                if (remainingSecon
